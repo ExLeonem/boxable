@@ -11,15 +11,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
+import be.quodlibet.boxable.text.HtmlToken;
 import be.quodlibet.boxable.text.ParagraphProcessingContext;
 import be.quodlibet.boxable.utils.PageContentStreamOptimized;
 
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
-import be.quodlibet.boxable.text.PipelineLayer;
 import be.quodlibet.boxable.text.Token;
 import be.quodlibet.boxable.text.TokenType;
 import be.quodlibet.boxable.text.Tokenizer;
@@ -172,20 +171,20 @@ public class Paragraph
 
   private void processOpenTag(Token token, ParagraphProcessingContext processingContext, List<String> result)
   {
-    if (isBold(token))
+    if (token.isBold())
     {
       processingContext.bold = true;
       processingContext.currentFont = getFont(processingContext);
     }
-    else if (isItalic(token))
+    else if (token.isItalic())
     {
       processingContext.italic = true;
       processingContext.currentFont = getFont(processingContext);
     }
-    else if (isList(token))
+    else if (token.isList())
     {
       processingContext.listLevel++;
-      if (token.getData().equals("ol"))
+      if (token.isOrderedList())
       {
         processingContext.numberOfOrderedLists++;
         if (processingContext.listLevel > 1)
@@ -210,7 +209,7 @@ public class Paragraph
           processingContext.lineCounter++;
         }
       }
-      else if (token.getData().equals("ul"))
+      else if (token.isUnorderedList())
       {
         processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
         // check if you have some text before this list, if you don't then you really don't need extra line break for that
@@ -233,22 +232,22 @@ public class Paragraph
   private void processClosedTag(Token token, ParagraphProcessingContext processingContext,
       List<String> result)
   {
-    if (isBold(token))
+    if (token.isBold())
     {
       processingContext.bold = false;
       processingContext.currentFont = getFont(processingContext);
       processingContext.sinceLastWrapPoint.push(token);
     }
-    else if (isItalic(token))
+    else if (token.isItalic())
     {
       processingContext.italic = false;
       processingContext.currentFont = getFont(processingContext);
       processingContext.sinceLastWrapPoint.push(token);
     }
-    else if (isList(token))
+    else if (token.isList())
     {
       processingContext.listLevel--;
-      if (token.getData().equals("ol"))
+      if (token.isOrderedList())
       {
         processingContext.numberOfOrderedLists--;
         // reset elements
@@ -268,7 +267,7 @@ public class Paragraph
         processingContext.lineCounter++;
       }
     }
-    else if (isListElement(token))
+    else if (token.isListElement())
     {
       // wrap at last wrap point?
       if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
@@ -331,7 +330,7 @@ public class Paragraph
       processingContext.lineCounter++;
       processingContext.listElement = false;
     }
-    if (isParagraph(token))
+    if (token.isParagraph())
     {
       if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
       {
@@ -483,7 +482,7 @@ public class Paragraph
       }
       processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
     }
-    if (isParagraph(token))
+    if (token.isParagraph())
     {
       // check if you have some text before this paragraph, if you don't then you really don't need extra line break for that
       if (processingContext.textInLine.trimmedWidth() > 0)
@@ -495,7 +494,7 @@ public class Paragraph
         processingContext.lineCounter++;
       }
     }
-    else if (isListElement(token))
+    else if (token.isListElement())
     {
       processingContext.listElement = true;
       // token padding, token bullet
@@ -693,31 +692,6 @@ public class Paragraph
     {
       e.printStackTrace();
     }
-  }
-
-  private static boolean isItalic(final Token token)
-  {
-    return "i".equals(token.getData());
-  }
-
-  private static boolean isBold(final Token token)
-  {
-    return "b".equals(token.getData());
-  }
-
-  private static boolean isParagraph(final Token token)
-  {
-    return "p".equals(token.getData());
-  }
-
-  private static boolean isListElement(final Token token)
-  {
-    return "li".equals(token.getData());
-  }
-
-  private static boolean isList(final Token token)
-  {
-    return "ul".equals(token.getData()) || "ol".equals(token.getData());
   }
 
   private float indentLevel(int numberOfSpaces) throws IOException

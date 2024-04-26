@@ -1,33 +1,64 @@
 package be.quodlibet.boxable.text;
 
-import org.apache.pdfbox.pdmodel.font.PDFont;
-
 import java.io.IOException;
 import java.util.Objects;
+
+import org.apache.pdfbox.pdmodel.font.PDFont;
 
 // Token itself is thread safe, so you can reuse shared instances;
 // however, subclasses may have additional methods which are not thread safe.
 public class Token {
 
 	private final TokenType type;
-	
+
 	private final String data;
 
 	public Token(TokenType type, String data) {
 		this.type = type;
 		this.data = data;
 	}
-	
+
 	public String getData() {
 		return data;
 	}
-	
+
 	public TokenType getType() {
 		return type;
 	}
 
 	public float getWidth(PDFont font) throws IOException {
 		return font.getStringWidth(getData());
+	}
+
+	public boolean isList() {
+		return HtmlToken.UL.equals(data) || HtmlToken.OL.equals(data);
+	}
+
+  public boolean isUnorderedList() {
+    return HtmlToken.UL.equals(data);
+  }
+
+  public boolean isOrderedList() {
+    return HtmlToken.OL.equals(data);
+  }
+
+	public boolean isListElement()
+	{
+		return HtmlToken.LI.equals(data);
+	}
+
+	public boolean isParagraph() {
+		return HtmlToken.P.equals(data);
+	}
+
+	public boolean isItalic()
+	{
+		return HtmlToken.I.equals(data);
+	}
+
+	public boolean isBold()
+	{
+		return HtmlToken.B.equals(data);
 	}
 
 	@Override
