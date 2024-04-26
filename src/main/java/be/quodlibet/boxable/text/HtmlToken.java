@@ -7,7 +7,8 @@ public enum HtmlToken
   P(),
   LI(),
   I(),
-  B();
+  B(),
+  NO_HTML_TOKEN();
 
   private String openTag;
   private String closedTag;
@@ -29,5 +30,16 @@ public enum HtmlToken
   public String toString()
   {
     return this.tagName;
+  }
+
+  public static HtmlToken fromString(String token)
+  {
+    try
+    {
+      return valueOf(token);
+    } catch (IllegalArgumentException e)
+    {
+      return NO_HTML_TOKEN;
+    }
   }
 }

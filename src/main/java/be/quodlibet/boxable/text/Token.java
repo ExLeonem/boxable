@@ -18,6 +18,11 @@ public class Token {
 		this.data = data;
 	}
 
+  public HtmlToken toHtmlToken()
+  {
+    return HtmlToken.fromString(data);
+  }
+
 	public String getData() {
 		return data;
 	}

@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import be.quodlibet.boxable.text.HtmlToken;
 import be.quodlibet.boxable.text.ParagraphProcessingContext;
 import be.quodlibet.boxable.utils.PageContentStreamOptimized;
 
@@ -124,14 +123,13 @@ public class Paragraph
       return lines;
     }
 
-    final List<String> result = new ArrayList<>();
-
     // text and wrappingFunction are immutable, so we only ever need to compute tokens once
     if (tokens == null)
     {
       tokens = Tokenizer.tokenize(text, wrappingFunction);
     }
 
+    final List<String> result = new ArrayList<>();
     ParagraphProcessingContext processingContext = new ParagraphProcessingContext(font);
     for (final Token token : tokens)
     {
@@ -166,184 +164,131 @@ public class Paragraph
 
     lines = result;
     return result;
-
   }
 
   private void processOpenTag(Token token, ParagraphProcessingContext processingContext, List<String> result)
   {
-    if (token.isBold())
+    switch (token.toHtmlToken())
     {
+    case B:
       processingContext.bold = true;
       processingContext.currentFont = getFont(processingContext);
-    }
-    else if (token.isItalic())
-    {
+      break;
+    case I:
       processingContext.italic = true;
       processingContext.currentFont = getFont(processingContext);
+      break;
+    case LI:
+    case UL:
+      processOpenListTag(token, processingContext, result);
+      break;
     }
-    else if (token.isList())
-    {
-      processingContext.listLevel++;
-      if (token.isOrderedList())
-      {
-        processingContext.numberOfOrderedLists++;
-        if (processingContext.listLevel > 1)
-        {
-          processingContext.stack.add(new HTMLListNode(processingContext.orderListElement - 1,
-              processingContext.stack.isEmpty() ?
-                  String.valueOf(processingContext.orderListElement - 1) + "." :
-                  processingContext.stack.peek().getValue() + String.valueOf(processingContext.orderListElement - 1) + "."));
-        }
-        processingContext.orderListElement = 1;
 
-        processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
-        // check if you have some text before this list, if you don't then you really don't need extra line break for that
-        if (processingContext.textInLine.trimmedWidth() > 0)
-        {
-          // this is our line
-          result.add(processingContext.textInLine.trimmedText());
-          lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
-          mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
-          maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
-          processingContext.textInLine.reset();
-          processingContext.lineCounter++;
-        }
-      }
-      else if (token.isUnorderedList())
-      {
-        processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
-        // check if you have some text before this list, if you don't then you really don't need extra line break for that
-        if (processingContext.textInLine.trimmedWidth() > 0)
-        {
-          // this is our line
-          result.add(processingContext.textInLine.trimmedText());
-          lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
-          mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
-          maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
-          processingContext.textInLine.reset();
-          processingContext.lineCounter++;
-        }
-
-      }
-    }
     processingContext.sinceLastWrapPoint.push(token);
+  }
+
+  private void processOpenListTag(Token token, ParagraphProcessingContext processingContext, List<String> result)
+  {
+    processingContext.listLevel++;
+    switch (token.toHtmlToken()) {
+    case OL:
+      processOpenOrderedListTag(processingContext, result);
+      break;
+    case UL:
+      processGeneralOpenListTag(processingContext, result);
+      break;
+    }
+  }
+
+  private void processOpenOrderedListTag(ParagraphProcessingContext processingContext, List<String> result)
+  {
+    processingContext.numberOfOrderedLists++;
+    if (processingContext.listLevel > 1)
+    {
+      processingContext.stack.add(new HTMLListNode(processingContext.orderListElement - 1,
+          processingContext.stack.isEmpty() ?
+              String.valueOf(processingContext.orderListElement - 1) + "." :
+              processingContext.stack.peek().getValue() + String.valueOf(
+                  processingContext.orderListElement - 1) + "."));
+    }
+    processingContext.orderListElement = 1;
+    processGeneralOpenListTag(processingContext, result);
+  }
+
+  private void processGeneralOpenListTag(ParagraphProcessingContext processingContext, List<String> result)
+  {
+    processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+    // check if you have some text before this list, if you don't then you really don't need extra line break for that
+    if (processingContext.textInLine.trimmedWidth() > 0)
+    {
+      // this is our line
+      result.add(processingContext.textInLine.trimmedText());
+      lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
+      mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
+      maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
+      processingContext.textInLine.reset();
+      processingContext.lineCounter++;
+    }
   }
 
   private void processClosedTag(Token token, ParagraphProcessingContext processingContext,
       List<String> result)
   {
-    if (token.isBold())
+    switch (token.toHtmlToken())
     {
+    case B:
       processingContext.bold = false;
       processingContext.currentFont = getFont(processingContext);
       processingContext.sinceLastWrapPoint.push(token);
-    }
-    else if (token.isItalic())
-    {
+      break;
+    case I:
       processingContext.italic = false;
       processingContext.currentFont = getFont(processingContext);
       processingContext.sinceLastWrapPoint.push(token);
+      break;
+    case UL:
+    case OL:
+      processClosedListTag(token, processingContext, result);
+      break;
+    case LI:
+      processClosedListElementTag(processingContext, result);
+      break;
+    case P:
+      processClosedParagraphHtmlTag(processingContext, result);
+      break;
     }
-    else if (token.isList())
+  }
+
+  private void processClosedListTag(Token token, ParagraphProcessingContext processingContext, List<String> result)
+  {
+    processingContext.listLevel--;
+    if (token.isOrderedList())
     {
-      processingContext.listLevel--;
-      if (token.isOrderedList())
+      processingContext.numberOfOrderedLists--;
+      // reset elements
+      if (processingContext.numberOfOrderedLists > 0)
       {
-        processingContext.numberOfOrderedLists--;
-        // reset elements
-        if (processingContext.numberOfOrderedLists > 0)
-        {
-          processingContext.orderListElement = processingContext.stack.peek().getOrderingNumber() + 1;
-          processingContext.stack.pop();
-        }
-      }
-      // ensure extra space after each lists
-      // no need to worry about current line text because last closing <li> tag already done that
-      if (processingContext.listLevel == 0)
-      {
-        result.add(" ");
-        lineWidths.put(processingContext.lineCounter, 0.0f);
-        mapLineTokens.put(processingContext.lineCounter, new ArrayList<Token>());
-        processingContext.lineCounter++;
+        processingContext.orderListElement = processingContext.stack.peek().getOrderingNumber() + 1;
+        processingContext.stack.pop();
       }
     }
-    else if (token.isListElement())
+
+    // ensure extra space after each lists
+    // no need to worry about current line text because last closing <li> tag already done that
+    if (processingContext.listLevel == 0)
     {
-      // wrap at last wrap point?
-      if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
-      {
-        // this is our line
-        result.add(processingContext.textInLine.trimmedText());
-        lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
-        mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
-        maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
-        processingContext.textInLine.reset();
-        processingContext.lineCounter++;
-        // wrapping at last wrap point
-        if (processingContext.numberOfOrderedLists > 0)
-        {
-          String orderingNumber = processingContext.stack.isEmpty() ?
-              String.valueOf(processingContext.orderListElement) + "." :
-              processingContext.stack.pop().getValue() + ".";
-          processingContext.stack.add(new HTMLListNode(processingContext.orderListElement, orderingNumber));
-          try
-          {
-            float tab = indentLevel(DEFAULT_TAB);
-            float orderingNumberAndTab = font.getStringWidth(orderingNumber) + tab;
-            processingContext.textInLine.push(processingContext.currentFont, fontSize,
-                new Token(TokenType.PADDING, String
-                    .valueOf(orderingNumberAndTab / 1000 * getFontSize())));
-          }
-          catch (IOException e)
-          {
-            e.printStackTrace();
-          }
-          processingContext.orderListElement++;
-        }
-        else
-        {
-          try
-          {
-            // if it's not left aligned then ignore list and list element and deal with it as normal text where <li> mimic <br> behaviour
-            float tabBullet =
-                getAlign().equals(HorizontalAlignment.LEFT) ? indentLevel(DEFAULT_TAB * Math.max(
-                    processingContext.listLevel - 1, 0) + DEFAULT_TAB_AND_BULLET) : indentLevel(DEFAULT_TAB);
-            processingContext.textInLine.push(processingContext.currentFont, fontSize,
-                new Token(TokenType.PADDING,
-                    String.valueOf(tabBullet / 1000 * getFontSize())));
-          }
-          catch (IOException e)
-          {
-            e.printStackTrace();
-          }
-        }
-        processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
-      }
-      // wrapping at this must-have wrap point
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
-      // this is our line
-      result.add(processingContext.textInLine.trimmedText());
-      lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
-      mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
-      maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
-      processingContext.textInLine.reset();
+      result.add(" ");
+      lineWidths.put(processingContext.lineCounter, 0.0f);
+      mapLineTokens.put(processingContext.lineCounter, new ArrayList<Token>());
       processingContext.lineCounter++;
-      processingContext.listElement = false;
     }
-    if (token.isParagraph())
+  }
+
+  private void processClosedListElementTag(ParagraphProcessingContext processingContext, List<String> result)
+  {
+    // wrap at last wrap point?
+    if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
     {
-      if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
-      {
-        // this is our line
-        result.add(processingContext.textInLine.trimmedText());
-        lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
-        maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
-        mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
-        processingContext.lineCounter++;
-        processingContext.textInLine.reset();
-      }
-      // wrapping at this must-have wrap point
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
       // this is our line
       result.add(processingContext.textInLine.trimmedText());
       lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
@@ -352,12 +297,86 @@ public class Paragraph
       processingContext.textInLine.reset();
       processingContext.lineCounter++;
 
-      // extra spacing because it's a paragraph
-      result.add(" ");
-      lineWidths.put(processingContext.lineCounter, 0.0f);
-      mapLineTokens.put(processingContext.lineCounter, new ArrayList<Token>());
-      processingContext.lineCounter++;
+      // wrapping at last wrap point
+      if (processingContext.numberOfOrderedLists > 0)
+      {
+        String orderingNumber = processingContext.stack.isEmpty() ?
+            String.valueOf(processingContext.orderListElement) + "." :
+            processingContext.stack.pop().getValue() + ".";
+        processingContext.stack.add(new HTMLListNode(processingContext.orderListElement, orderingNumber));
+        try
+        {
+          float tab = indentLevel(DEFAULT_TAB);
+          float orderingNumberAndTab = font.getStringWidth(orderingNumber) + tab;
+          processingContext.textInLine.push(processingContext.currentFont, fontSize,
+              new Token(TokenType.PADDING, String
+                  .valueOf(orderingNumberAndTab / 1000 * getFontSize())));
+        }
+        catch (IOException e)
+        {
+          e.printStackTrace();
+        }
+        processingContext.orderListElement++;
+      }
+      else
+      {
+        try
+        {
+          // if it's not left aligned then ignore list and list element and deal with it as normal text where <li> mimic <br> behaviour
+          float tabBullet =
+              getAlign().equals(HorizontalAlignment.LEFT) ? indentLevel(DEFAULT_TAB * Math.max(
+                  processingContext.listLevel - 1, 0) + DEFAULT_TAB_AND_BULLET) : indentLevel(DEFAULT_TAB);
+          processingContext.textInLine.push(processingContext.currentFont, fontSize,
+              new Token(TokenType.PADDING,
+                  String.valueOf(tabBullet / 1000 * getFontSize())));
+        }
+        catch (IOException e)
+        {
+          e.printStackTrace();
+        }
+      }
+      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
     }
+
+    // wrapping at this must-have wrap point
+    processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+    // this is our line
+    result.add(processingContext.textInLine.trimmedText());
+    lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
+    mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
+    maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
+    processingContext.textInLine.reset();
+    processingContext.lineCounter++;
+    processingContext.listElement = false;
+  }
+
+  private void processClosedParagraphHtmlTag(ParagraphProcessingContext processingContext, List<String> result)
+  {
+    if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
+    {
+      // this is our line
+      result.add(processingContext.textInLine.trimmedText());
+      lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
+      maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
+      mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
+      processingContext.lineCounter++;
+      processingContext.textInLine.reset();
+    }
+    // wrapping at this must-have wrap point
+    processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+    // this is our line
+    result.add(processingContext.textInLine.trimmedText());
+    lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
+    mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
+    maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
+    processingContext.textInLine.reset();
+    processingContext.lineCounter++;
+
+    // extra spacing because it's a paragraph
+    result.add(" ");
+    lineWidths.put(processingContext.lineCounter, 0.0f);
+    mapLineTokens.put(processingContext.lineCounter, new ArrayList<Token>());
+    processingContext.lineCounter++;
   }
 
   private void processPossibleWrapPoint(ParagraphProcessingContext processingContext, List<String> result)
@@ -436,6 +455,7 @@ public class Paragraph
       maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
       processingContext.textInLine.reset();
       processingContext.lineCounter++;
+
       // wrapping at last wrap point
       if (processingContext.listElement)
       {
@@ -445,7 +465,6 @@ public class Paragraph
         }
         if (processingContext.numberOfOrderedLists > 0)
         {
-//							String orderingNumber = String.valueOf(orderListElement) + ". ";
           String orderingNumber = processingContext.stack.isEmpty() ?
               String.valueOf("1") + "." :
               processingContext.stack.pop().getValue() + ". ";
@@ -482,111 +501,127 @@ public class Paragraph
       }
       processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
     }
-    if (token.isParagraph())
+
+    switch (token.toHtmlToken())
     {
-      // check if you have some text before this paragraph, if you don't then you really don't need extra line break for that
-      if (processingContext.textInLine.trimmedWidth() > 0)
+    case P:
+      processWrapPointParagraph(processingContext, result);
+      break;
+    case UL:
+    case OL:
+      processWrapPointListElement(processingContext);
+      break;
+    default:
+      processDefaultWrapPoint(processingContext, result);
+    }
+  }
+
+  private void processWrapPointParagraph(ParagraphProcessingContext processingContext, List<String> result)
+  {
+    // check if you have some text before this paragraph, if you don't then you really don't need extra line break for that
+    if (processingContext.textInLine.trimmedWidth() > 0)
+    {
+      // extra spacing because it's a paragraph
+      result.add(" ");
+      lineWidths.put(processingContext.lineCounter, 0.0f);
+      mapLineTokens.put(processingContext.lineCounter, new ArrayList<Token>());
+      processingContext.lineCounter++;
+    }
+  }
+
+  private void processWrapPointListElement(ParagraphProcessingContext processingContext)
+  {
+    processingContext.listElement = true;
+    // token padding, token bullet
+    try
+    {
+      // if it's not left aligned then ignore list and list element and deal with it as normal text where <li> mimic <br> behaviour
+      float tab = getAlign().equals(HorizontalAlignment.LEFT) ? indentLevel(DEFAULT_TAB * Math.max(
+          processingContext.listLevel - 1, 0) + DEFAULT_TAB) : indentLevel(DEFAULT_TAB);
+      processingContext.textInLine.push(processingContext.currentFont, fontSize,
+          new Token(TokenType.PADDING,
+              String.valueOf(tab / 1000 * getFontSize())));
+      if (processingContext.numberOfOrderedLists > 0)
       {
-        // extra spacing because it's a paragraph
-        result.add(" ");
-        lineWidths.put(processingContext.lineCounter, 0.0f);
-        mapLineTokens.put(processingContext.lineCounter, new ArrayList<Token>());
-        processingContext.lineCounter++;
+        // if it's ordering list then move depending on your: ordering number + ". "
+        String orderingNumber;
+        if (processingContext.listLevel > 1)
+        {
+          orderingNumber =
+              processingContext.stack.peek().getValue() + String.valueOf(processingContext.orderListElement)
+                  + ". ";
+        }
+        else
+        {
+          orderingNumber = String.valueOf(processingContext.orderListElement) + ". ";
+        }
+        processingContext.textInLine.push(processingContext.currentFont, fontSize,
+            Token.text(TokenType.ORDERING, orderingNumber));
+        processingContext.orderListElement++;
+      }
+      else
+      {
+        // if it's unordered list then just move by bullet character (take care of alignment!)
+        processingContext.textInLine.push(processingContext.currentFont, fontSize,
+            Token.text(TokenType.BULLET, " "));
       }
     }
-    else if (token.isListElement())
+    catch (IOException e)
     {
-      processingContext.listElement = true;
-      // token padding, token bullet
+      e.printStackTrace();
+    }
+  }
+
+  private void processDefaultWrapPoint(ParagraphProcessingContext processingContext, List<String> result)
+  {
+    // wrapping at this must-have wrap point
+    processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+    result.add(processingContext.textInLine.trimmedText());
+    lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
+    mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
+    maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
+    processingContext.textInLine.reset();
+    processingContext.lineCounter++;
+    if (processingContext.listLevel > 0)
+    {
+      // preserve current indent
       try
       {
-        // if it's not left aligned then ignore list and list element and deal with it as normal text where <li> mimic <br> behaviour
-        float tab = getAlign().equals(HorizontalAlignment.LEFT) ? indentLevel(DEFAULT_TAB * Math.max(
-            processingContext.listLevel - 1, 0) + DEFAULT_TAB) : indentLevel(DEFAULT_TAB);
-        processingContext.textInLine.push(processingContext.currentFont, fontSize,
-            new Token(TokenType.PADDING,
-                String.valueOf(tab / 1000 * getFontSize())));
         if (processingContext.numberOfOrderedLists > 0)
         {
+          float tab = getAlign().equals(HorizontalAlignment.LEFT) ? indentLevel(DEFAULT_TAB * Math.max(
+              processingContext.listLevel - 1, 0)) : indentLevel(DEFAULT_TAB);
           // if it's ordering list then move depending on your: ordering number + ". "
           String orderingNumber;
           if (processingContext.listLevel > 1)
           {
-            orderingNumber =
-                processingContext.stack.peek().getValue() + String.valueOf(processingContext.orderListElement)
-                    + ". ";
+            orderingNumber = processingContext.stack.peek().getValue() + String.valueOf(
+                processingContext.orderListElement) + ". ";
           }
           else
           {
             orderingNumber = String.valueOf(processingContext.orderListElement) + ". ";
           }
+          float tabAndOrderingNumber = tab + font.getStringWidth(orderingNumber);
           processingContext.textInLine.push(processingContext.currentFont, fontSize,
-              Token.text(TokenType.ORDERING, orderingNumber));
+              new Token(TokenType.PADDING, String.valueOf(tabAndOrderingNumber / 1000 * getFontSize())));
           processingContext.orderListElement++;
         }
         else
         {
-          // if it's unordered list then just move by bullet character (take care of alignment!)
-          processingContext.textInLine.push(processingContext.currentFont, fontSize,
-              Token.text(TokenType.BULLET, " "));
+          if (getAlign().equals(HorizontalAlignment.LEFT))
+          {
+            float tab = indentLevel(
+                DEFAULT_TAB * Math.max(processingContext.listLevel - 1, 0) + DEFAULT_TAB + BULLET_SPACE);
+            processingContext.textInLine.push(processingContext.currentFont, fontSize,
+                new Token(TokenType.PADDING,
+                    String.valueOf(tab / 1000 * getFontSize())));
+          }
         }
       }
       catch (IOException e)
       {
         e.printStackTrace();
-      }
-    }
-    else
-    {
-      // wrapping at this must-have wrap point
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
-      result.add(processingContext.textInLine.trimmedText());
-      lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
-      mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
-      maxLineWidth = Math.max(maxLineWidth, processingContext.textInLine.trimmedWidth());
-      processingContext.textInLine.reset();
-      processingContext.lineCounter++;
-      if (processingContext.listLevel > 0)
-      {
-        // preserve current indent
-        try
-        {
-          if (processingContext.numberOfOrderedLists > 0)
-          {
-            float tab = getAlign().equals(HorizontalAlignment.LEFT) ? indentLevel(DEFAULT_TAB * Math.max(
-                processingContext.listLevel - 1, 0)) : indentLevel(DEFAULT_TAB);
-            // if it's ordering list then move depending on your: ordering number + ". "
-            String orderingNumber;
-            if (processingContext.listLevel > 1)
-            {
-              orderingNumber = processingContext.stack.peek().getValue() + String.valueOf(
-                  processingContext.orderListElement) + ". ";
-            }
-            else
-            {
-              orderingNumber = String.valueOf(processingContext.orderListElement) + ". ";
-            }
-            float tabAndOrderingNumber = tab + font.getStringWidth(orderingNumber);
-            processingContext.textInLine.push(processingContext.currentFont, fontSize,
-                new Token(TokenType.PADDING, String.valueOf(tabAndOrderingNumber / 1000 * getFontSize())));
-            processingContext.orderListElement++;
-          }
-          else
-          {
-            if (getAlign().equals(HorizontalAlignment.LEFT))
-            {
-              float tab = indentLevel(
-                  DEFAULT_TAB * Math.max(processingContext.listLevel - 1, 0) + DEFAULT_TAB + BULLET_SPACE);
-              processingContext.textInLine.push(processingContext.currentFont, fontSize,
-                  new Token(TokenType.PADDING,
-                      String.valueOf(tab / 1000 * getFontSize())));
-            }
-          }
-        }
-        catch (IOException e)
-        {
-          e.printStackTrace();
-        }
       }
     }
   }
