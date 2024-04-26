@@ -15,6 +15,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
@@ -94,6 +96,8 @@ public class TableTest {
 		cell.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE));
 		cell.setFontSize(6);
 
+		PDFont helveticaOblique = new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE);
+
 		// Add multiple rows with random facts about Belgium
 		for (String[] fact : facts) {
 
@@ -114,7 +118,7 @@ public class TableTest {
 					}
 				} else if(fact[i].equalsIgnoreCase("Google")) {
 					cell = row.createCell((100 / 9f), fact[i]);
-					cell.setFont(PDType1Font.HELVETICA_OBLIQUE);
+					cell.setFont(helveticaOblique);
 					cell.setFontSize(6);
 					cell.setUrl(new URL("https://www.google.de"));
 				} else {
@@ -1209,11 +1213,13 @@ public class TableTest {
 
 		// draw page title
 		PageContentStreamOptimized cos = new PageContentStreamOptimized(new PDPageContentStream(doc, page));
-		PDStreamUtils.write(cos, "Welcome to your first borderless table", PDType1Font.HELVETICA_BOLD, 14, 15, yStart,
+		PDType1Font helveticaBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+		PDStreamUtils.write(cos, "Welcome to your first borderless table", helveticaBold, 14, 15, yStart,
 				Color.BLACK);
 		cos.close();
 
-		yStart -= FontUtils.getHeight(PDType1Font.HELVETICA_BOLD, 14) + 15;
+
+		yStart -= FontUtils.getHeight(helveticaBold, 14) + 15;
 
 		BaseTable table = new BaseTable(yStart, yStartNewPage, bottomMargin, tableWidth, margin, doc, page, drawLines,
 				drawContent);
