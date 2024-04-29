@@ -9,7 +9,7 @@ import be.quodlibet.boxable.HTMLListNode;
 public class ParagraphProcessingContext
 {
   public final PipelineLayer textInLine;
-  public final PipelineLayer sinceLastWrapPoint;
+  public final PipelineLayer lineSinceLastWrapPoint;
   public int lineCounter;
   public boolean italic;
   public boolean bold;
@@ -23,7 +23,7 @@ public class ParagraphProcessingContext
   public ParagraphProcessingContext(PDFont currentFont)
   {
     this.textInLine = new PipelineLayer();
-    this.sinceLastWrapPoint = new PipelineLayer();
+    this.lineSinceLastWrapPoint = new PipelineLayer();
     this.lineCounter = 0;
     this.italic = false;
     this.bold = false;

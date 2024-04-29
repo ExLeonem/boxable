@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import be.quodlibet.boxable.text.ParagraphProcessingContext;
 import be.quodlibet.boxable.utils.PageContentStreamOptimized;
@@ -19,7 +18,6 @@ import be.quodlibet.boxable.utils.PageContentStreamOptimized;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
-import be.quodlibet.boxable.text.PipelineLayer;
 import be.quodlibet.boxable.text.Token;
 import be.quodlibet.boxable.text.TokenType;
 import be.quodlibet.boxable.text.Tokenizer;
@@ -156,9 +154,9 @@ public class Paragraph
       }
     }
 
-    if (processingContext.sinceLastWrapPoint.trimmedWidth() + processingContext.textInLine.trimmedWidth() > 0)
+    if (processingContext.lineSinceLastWrapPoint.trimmedWidth() + processingContext.textInLine.trimmedWidth() > 0)
     {
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
       result.add(processingContext.textInLine.trimmedText());
       lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
       mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
@@ -175,16 +173,19 @@ public class Paragraph
     if (isBold(token))
     {
       processingContext.bold = true;
+      addTokenToAccumulatedText(token, processingContext);
       processingContext.currentFont = getFont(processingContext);
     }
     else if (isItalic(token))
     {
       processingContext.italic = true;
+      addTokenToAccumulatedText(token, processingContext);
       processingContext.currentFont = getFont(processingContext);
     }
     else if (isList(token))
     {
       processingContext.listLevel++;
+      addTokenToAccumulatedText(token, processingContext);
       if (token.getData().equals("ol"))
       {
         processingContext.numberOfOrderedLists++;
@@ -197,7 +198,7 @@ public class Paragraph
         }
         processingContext.orderListElement = 1;
 
-        processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+        processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
         // check if you have some text before this list, if you don't then you really don't need extra line break for that
         if (processingContext.textInLine.trimmedWidth() > 0)
         {
@@ -212,7 +213,7 @@ public class Paragraph
       }
       else if (token.getData().equals("ul"))
       {
-        processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+        processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
         // check if you have some text before this list, if you don't then you really don't need extra line break for that
         if (processingContext.textInLine.trimmedWidth() > 0)
         {
@@ -227,7 +228,18 @@ public class Paragraph
 
       }
     }
-    processingContext.sinceLastWrapPoint.push(token);
+    processingContext.lineSinceLastWrapPoint.push(token);
+  }
+
+  private void addTokenToAccumulatedText(Token token, ParagraphProcessingContext processingContext)
+  {
+    try {
+      processingContext.lineSinceLastWrapPoint.push(processingContext.currentFont, fontSize,
+          Token.text(TokenType.TEXT, token.toTag()));
+    } catch (IOException e)
+    {
+      System.out.println("failed");
+    }
   }
 
   private void processClosedTag(Token token, ParagraphProcessingContext processingContext,
@@ -237,17 +249,20 @@ public class Paragraph
     {
       processingContext.bold = false;
       processingContext.currentFont = getFont(processingContext);
-      processingContext.sinceLastWrapPoint.push(token);
+      addTokenToAccumulatedText(token, processingContext);
+      processingContext.lineSinceLastWrapPoint.push(token);
     }
     else if (isItalic(token))
     {
       processingContext.italic = false;
       processingContext.currentFont = getFont(processingContext);
-      processingContext.sinceLastWrapPoint.push(token);
+      addTokenToAccumulatedText(token, processingContext);
+      processingContext.lineSinceLastWrapPoint.push(token);
     }
     else if (isList(token))
     {
       processingContext.listLevel--;
+      addTokenToAccumulatedText(token, processingContext);
       if (token.getData().equals("ol"))
       {
         processingContext.numberOfOrderedLists--;
@@ -271,7 +286,7 @@ public class Paragraph
     else if (isListElement(token))
     {
       // wrap at last wrap point?
-      if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
+      if (processingContext.textInLine.width() + processingContext.lineSinceLastWrapPoint.trimmedWidth() > width)
       {
         // this is our line
         result.add(processingContext.textInLine.trimmedText());
@@ -318,10 +333,10 @@ public class Paragraph
             e.printStackTrace();
           }
         }
-        processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+        processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
       }
       // wrapping at this must-have wrap point
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
       // this is our line
       result.add(processingContext.textInLine.trimmedText());
       lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
@@ -333,7 +348,7 @@ public class Paragraph
     }
     if (isParagraph(token))
     {
-      if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
+      if (processingContext.textInLine.width() + processingContext.lineSinceLastWrapPoint.trimmedWidth() > width)
       {
         // this is our line
         result.add(processingContext.textInLine.trimmedText());
@@ -344,7 +359,7 @@ public class Paragraph
         processingContext.textInLine.reset();
       }
       // wrapping at this must-have wrap point
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
       // this is our line
       result.add(processingContext.textInLine.trimmedText());
       lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
@@ -363,7 +378,7 @@ public class Paragraph
 
   private void processPossibleWrapPoint(ParagraphProcessingContext processingContext, List<String> result)
   {
-    if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
+    if (processingContext.textInLine.width() + processingContext.lineSinceLastWrapPoint.trimmedWidth() > width)
     {
       // this is our line
       if (!processingContext.textInLine.isEmpty())
@@ -416,11 +431,11 @@ public class Paragraph
           }
         }
       }
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
     }
     else
     {
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
     }
   }
 
@@ -428,7 +443,7 @@ public class Paragraph
       List<String> result)
   {
     // wrap at last wrap point?
-    if (processingContext.textInLine.width() + processingContext.sinceLastWrapPoint.trimmedWidth() > width)
+    if (processingContext.textInLine.width() + processingContext.lineSinceLastWrapPoint.trimmedWidth() > width)
     {
       // this is our line
       result.add(processingContext.textInLine.trimmedText());
@@ -481,7 +496,7 @@ public class Paragraph
           }
         }
       }
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
     }
     if (isParagraph(token))
     {
@@ -540,7 +555,7 @@ public class Paragraph
     else
     {
       // wrapping at this must-have wrap point
-      processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+      processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
       result.add(processingContext.textInLine.trimmedText());
       lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
       mapLineTokens.put(processingContext.lineCounter, processingContext.textInLine.tokens());
@@ -667,9 +682,9 @@ public class Paragraph
           }
           // reset
           alreadyTextInLine = false;
-          processingContext.sinceLastWrapPoint.push(processingContext.currentFont, fontSize,
+          processingContext.lineSinceLastWrapPoint.push(processingContext.currentFont, fontSize,
               Token.text(TokenType.TEXT, firstPartOfWord.toString()));
-          processingContext.textInLine.push(processingContext.sinceLastWrapPoint);
+          processingContext.textInLine.push(processingContext.lineSinceLastWrapPoint);
           // this is our line
           result.add(processingContext.textInLine.trimmedText());
           lineWidths.put(processingContext.lineCounter, processingContext.textInLine.trimmedWidth());
@@ -680,12 +695,12 @@ public class Paragraph
           word = restOfTheWord.toString();
           wordWidth = processingContext.currentFont.getStringWidth(word);
         }
-        processingContext.sinceLastWrapPoint.push(processingContext.currentFont, fontSize,
+        processingContext.lineSinceLastWrapPoint.push(processingContext.currentFont, fontSize,
             Token.text(TokenType.TEXT, word));
       }
       else
       {
-        processingContext.sinceLastWrapPoint.push(processingContext.currentFont, fontSize, token);
+        processingContext.lineSinceLastWrapPoint.push(processingContext.currentFont, fontSize, token);
       }
 
     }

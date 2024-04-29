@@ -35,6 +35,19 @@ public class Token {
 		return getClass().getSimpleName() + "[" + type + "/" + data + "]";
 	}
 
+	public String toTag()
+	{
+		switch (type)
+		{
+			case OPEN_TAG:
+				return "<" + data + ">";
+			case CLOSE_TAG:
+				return "</" + data + ">";
+		}
+
+		throw new IllegalArgumentException("Token is not a tag.");
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
