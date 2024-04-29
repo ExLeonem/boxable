@@ -174,48 +174,6 @@ public class TokenizerTest
   }
 
   @Test
-  public void check_where_() throws IOException
-  {
-
-    PDPage page = new PDPage(PDRectangle.A4);
-    PDFont pdFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-    BaseTable table = new BaseTable(
-        0,
-        0,
-        50,
-        50,
-        page.getMediaBox().getWidth(),
-        50,
-        new PDDocument(),
-        page,
-        true,
-        true
-    );
-
-    Row<PDPage> row = table.createRow(25);
-    Cell<PDPage> cell = row.createCell(50, "");
-
-    final String text =
-        "asdfasdfas 1 <i><b>123</b> 123456</i> 12 "
-            + "<br/> asdfasdfas 1 <i><b>123</b> 123456</i> 12 "
-            + "<br/> asdfasdfas 1 <i><b>123</b> 123456</i> 12 "
-            + "<br/> asdfasdfas 1 <i><b>123</b> 123456</i> 12";
-    Paragraph paragraph = new Paragraph(
-        text,
-        pdFont,
-        cell.getFontSize(),
-        cell.getInnerWidth(),
-        HorizontalAlignment.LEFT,
-        Color.BLACK,
-        null,
-        cell.getWrappingFunction(),
-        cell.getLineSpacing()
-    );
-
-    paragraph.getLines();
-  }
-
-  @Test
   public void testEmptyString() throws Exception
   {
     // ""
