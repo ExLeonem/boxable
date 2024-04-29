@@ -10,15 +10,11 @@ public enum HtmlToken
   B(),
   NO_HTML_TOKEN();
 
-  private String openTag;
-  private String closedTag;
   private String tagName;
 
   HtmlToken()
   {
     this.tagName = this.name().toLowerCase();
-    this.openTag = "<" + tagName + ">";
-    this.closedTag = "</" + tagName + ">";
   }
 
   public boolean equals(String token)
