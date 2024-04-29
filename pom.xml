@@ -92,9 +92,10 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
-                    <compilerArguments>
+                    <fork>true</fork>
+                    <compilerArgs>
                         <bootclasspath>${sun.boot.class.path}${path.separator}${java.home}/lib/jfxrt.jar</bootclasspath>
-                    </compilerArguments>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
