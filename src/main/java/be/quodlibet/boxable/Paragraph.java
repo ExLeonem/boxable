@@ -226,11 +226,12 @@ public class Paragraph
         }
       }
     }
-    addTokenToAccumulatedText(token, processingContext);
+
+    addTokenToAccumulatedTextIfKeepHtmlTagsEnabled(token, processingContext);
     processingContext.lineSinceLastWrapPoint.push(token);
   }
 
-  private void addTokenToAccumulatedText(Token token, ParagraphProcessingContext processingContext)
+  private void addTokenToAccumulatedTextIfKeepHtmlTagsEnabled(Token token, ParagraphProcessingContext processingContext)
   {
     if (!keepHtmlTags)
     {
@@ -382,7 +383,7 @@ public class Paragraph
       processingContext.lineCounter++;
     }
 
-    addTokenToAccumulatedText(token, processingContext);
+    addTokenToAccumulatedTextIfKeepHtmlTagsEnabled(token, processingContext);
   }
 
   private void processPossibleWrapPoint(ParagraphProcessingContext processingContext, List<String> result)
@@ -510,7 +511,7 @@ public class Paragraph
     if (isParagraph(token))
     {
       // check if you have some text before this paragraph, if you don't then you really don't need extra line break for that
-      addTokenToAccumulatedText(token, processingContext);
+      addTokenToAccumulatedTextIfKeepHtmlTagsEnabled(token, processingContext);
       if (processingContext.textInLine.trimmedWidth() > 0)
       {
         // extra spacing because it's a paragraph
@@ -526,7 +527,7 @@ public class Paragraph
     else if (isListElement(token))
     {
       processingContext.listElement = true;
-      addTokenToAccumulatedText(token, processingContext);
+      addTokenToAccumulatedTextIfKeepHtmlTagsEnabled(token, processingContext);
       // token padding, token bullet
       try
       {
