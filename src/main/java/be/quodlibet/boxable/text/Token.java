@@ -3,8 +3,6 @@ package be.quodlibet.boxable.text;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 // Token itself is thread safe, so you can reuse shared instances;
@@ -47,12 +45,29 @@ public class Token {
 				return "</" + data + ">";
 		}
 
-		if (type == TokenType.WRAP_POINT && data.equals("li"))
+		if (wrapPointBecauseOfOpenTag())
 		{
-			return "<li>";
+			return "<" + data + ">";
 		}
 
 		throw new IllegalArgumentException("Token is not a tag.");
+	}
+
+	private boolean wrapPointBecauseOfOpenTag()
+	{
+		return type == TokenType.WRAP_POINT && isOneOf("li", "p");
+	}
+
+	private boolean isOneOf(String ... tags)
+	{
+		for (String tag : tags) {
+			if (data.equals(tag))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	@Override
