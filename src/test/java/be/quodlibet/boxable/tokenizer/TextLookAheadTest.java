@@ -1,11 +1,11 @@
 package be.quodlibet.boxable.tokenizer;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TextLookAheadTest
 {
@@ -13,7 +13,7 @@ public class TextLookAheadTest
   private static final int currentCharacterIndex = 0;
   private static final String text = "abcdefg";
 
-  @BeforeEach
+  @Before
   public void beforeEach()
   {
     sut = new TextLookAhead(text);

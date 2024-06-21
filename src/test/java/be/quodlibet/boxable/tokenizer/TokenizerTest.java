@@ -1,21 +1,21 @@
 package be.quodlibet.boxable.tokenizer;
 
 import be.quodlibet.boxable.text.WrappingFunction;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TokenizerTest {
     private Tokenizer tokenizer;
 
     private WrappingFunction wrappingFunction = null;
 
-    @BeforeEach
+    @Before
     public void beforeEach() {
         tokenizer = new Tokenizer();
     }
@@ -43,7 +43,7 @@ public class TokenizerTest {
         final List<Token> tokens = tokenizer.tokenize(text, wrappingFunction);
         if (TokenType.CLOSE_TAG.equals(tokens.get(tokens.size() - 1).getType())) {
             assertEquals(
-                    "<", tokens.get(tokens.size() - 1).getData(), "Text doesn't end with '<' character");
+                    "Text doesn't end with '<' character", "<", tokens.get(tokens.size() - 1).getData());
         }
     }
 
@@ -63,7 +63,7 @@ public class TokenizerTest {
                 italicText.append(token.getData());
             }
         }
-        assertEquals("123 123456", italicText.toString(), "Italic text is parsed wrong");
+        assertEquals("Italic text is parsed wrong", "123 123456", italicText.toString());
     }
 
     @Test
@@ -82,7 +82,7 @@ public class TokenizerTest {
                 italicText.append(token.getData());
             }
         }
-        assertEquals("123 123456", italicText.toString(), "Italic text is parsed wrong");
+        assertEquals("Italic text is parsed wrong", "123 123456", italicText.toString());
     }
 
     @Test
@@ -108,7 +108,7 @@ public class TokenizerTest {
                 boldItalicText.append(token.getData());
             }
         }
-        assertEquals("123", boldItalicText.toString(), "Bold-italic text is parsed wrong");
+        assertEquals("Bold-italic text is parsed wrong","123", boldItalicText.toString());
     }
 
     @Test
@@ -134,7 +134,7 @@ public class TokenizerTest {
                 boldItalicText.append(token.getData());
             }
         }
-        assertEquals("123456", boldItalicText.toString(), "Bold-italic text is parsed wrong");
+        assertEquals("Bold-italic text is parsed wrong", "123456", boldItalicText.toString());
     }
 
     @Test
@@ -143,7 +143,7 @@ public class TokenizerTest {
         final List<Token> tokens = tokenizer.tokenize(text, wrappingFunction);
         for (final Token token : tokens) {
             if (TokenType.TEXT.equals(token.getType()) && token.getData().equals("")) {
-                assertEquals("", token.getData(), "Bold-italic text is parsed wrong");
+                assertEquals("Bold-italic text is parsed wrong", "", token.getData());
             }
         }
     }
@@ -152,6 +152,6 @@ public class TokenizerTest {
     public void test_nullString() throws Exception {
         final String textNull = null;
         final List<Token> tokens = tokenizer.tokenize(textNull, wrappingFunction);
-        assertEquals(Collections.emptyList(), tokens, "Bold-italic text is parsed wrong");
+        assertEquals("Bold-italic text is parsed wrong", Collections.emptyList(), tokens);
     }
 }

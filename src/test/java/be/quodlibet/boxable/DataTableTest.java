@@ -18,7 +18,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import be.quodlibet.boxable.datatable.DataTable;
 import be.quodlibet.boxable.datatable.UpdateCellProperty;
-import org.junit.jupiter.api.*;
+import org.junit.*;
 
 /**
  *
@@ -31,22 +31,22 @@ public class DataTableTest
     {
     }
 
-    @BeforeAll
+    @BeforeClass
     public static void setUpClass()
     {
     }
 
-    @AfterAll
+    @AfterClass
     public static void tearDownClass()
     {
     }
 
-    @BeforeEach
+    @Before
     public void setUp()
     {
     }
 
-    @AfterEach
+    @After
     public void tearDown()
     {
     }
@@ -54,9 +54,6 @@ public class DataTableTest
     @Test
     public void listTestLandscape() throws IOException
     {
-
-
-
         //Initialize Document
         PDDocument doc = new PDDocument();
         PDPage page = new PDPage();
