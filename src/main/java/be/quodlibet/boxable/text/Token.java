@@ -1,9 +1,9 @@
 package be.quodlibet.boxable.text;
 
-import org.apache.pdfbox.pdmodel.font.PDFont;
-
 import java.io.IOException;
 import java.util.Objects;
+
+import org.apache.pdfbox.pdmodel.font.PDFont;
 
 // Token itself is thread safe, so you can reuse shared instances;
 // however, subclasses may have additional methods which are not thread safe.
@@ -33,6 +33,41 @@ public class Token {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + type + "/" + data + "]";
+	}
+
+	public String toTag()
+	{
+		switch (type)
+		{
+			case OPEN_TAG:
+				return "<" + data + ">";
+			case CLOSE_TAG:
+				return "</" + data + ">";
+		}
+
+		if (wrapPointBecauseOfOpenTag())
+		{
+			return "<" + data + ">";
+		}
+
+		throw new IllegalArgumentException("Token is not a tag.");
+	}
+
+	private boolean wrapPointBecauseOfOpenTag()
+	{
+		return type == TokenType.WRAP_POINT && isOneOf("li", "p");
+	}
+
+	private boolean isOneOf(String ... tags)
+	{
+		for (String tag : tags) {
+			if (data.equals(tag))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	@Override

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>9</version>    
+        <version>9</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -17,12 +17,12 @@
 
     <name>Boxable, a high-level API to creates table on top of Apache Pdfbox</name>
     <description>Easily creates tables in pdf.</description>
-	
+
     <licenses>
-      <license>
-        <name>Apache-2.0</name>
-        <url>https://www.apache.org/licenses/LICENSE-2.0</url>
-      </license>
+        <license>
+            <name>Apache-2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
     </licenses>
 
     <dependencies>
@@ -92,9 +92,6 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
-                    <compilerArguments>
-                        <bootclasspath>${sun.boot.class.path}${path.separator}${java.home}/lib/jfxrt.jar</bootclasspath>
-                    </compilerArguments>
                 </configuration>
             </plugin>
             <plugin>
