@@ -11,8 +11,10 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParagraphTest
 {
@@ -52,7 +54,7 @@ public class ParagraphTest
   {
     for (String expectedItem : expectedItems)
     {
-      Assert.assertTrue(actual.contains(expectedItem));
+      assertTrue(actual.contains(expectedItem));
     }
   }
 
@@ -121,7 +123,7 @@ public class ParagraphTest
 
     // assert
     String actual = concatAllLines(result);
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
   }
 
   private Paragraph createParagraph(String text, Cell<PDPage> cell)

@@ -2,7 +2,13 @@ package be.quodlibet.boxable.tokenizer;
 
 public class TextLookAhead<T>
 {
-  public static boolean hasCharacterAt(int textCharStartIndex, String text, int offsetOfStartIndex, char expectedCharacter)
+  private String text;
+
+  public TextLookAhead(String text) {
+    this.text = text;
+  }
+
+  public boolean hasCharacterAt(int textCharStartIndex, int offsetOfStartIndex, char expectedCharacter)
   {
     if (textCharStartIndex >= text.length() - offsetOfStartIndex)
     {
@@ -13,13 +19,18 @@ public class TextLookAhead<T>
     return actualCharacter == expectedCharacter;
   }
 
-  public static boolean hasNextCharacters(int textCharStartIndex, String text, String nextCharacters)
+  public boolean hasNextCharacters(int textCharStartIndex, String nextCharacters)
   {
     return hasNextCharacters(textCharStartIndex, text, nextCharacters, 0);
   }
 
+  public boolean hasNextCharacters(int textCharStartIndex, String nextCharacters, int additionalOffsetCharacterIndexFromText)
+  {
+    return hasNextCharacters(textCharStartIndex, text, nextCharacters, additionalOffsetCharacterIndexFromText);
+  }
+
   public static boolean hasNextCharacters(
-      int textCharStartIndex, String text, String nextCharacters, int additionalOffsetCharacterIndexFromText)
+      int textCharStartIndex, String text,  String nextCharacters, int additionalOffsetCharacterIndexFromText)
   {
     if (textCharStartIndex >= text.length() - nextCharacters.length())
     {

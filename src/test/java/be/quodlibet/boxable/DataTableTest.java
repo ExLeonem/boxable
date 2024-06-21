@@ -14,14 +14,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
 
 import be.quodlibet.boxable.datatable.DataTable;
 import be.quodlibet.boxable.datatable.UpdateCellProperty;
+import org.junit.jupiter.api.*;
 
 /**
  *
@@ -34,22 +31,22 @@ public class DataTableTest
     {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass()
     {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass()
     {
     }
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
     }
