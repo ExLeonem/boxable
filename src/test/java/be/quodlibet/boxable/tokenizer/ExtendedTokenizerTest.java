@@ -1,23 +1,25 @@
 package be.quodlibet.boxable.tokenizer;
 
-import be.quodlibet.boxable.text.WrappingFunction;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
 
-public class TokenizerTest {
-    private Tokenizer tokenizer;
+import be.quodlibet.boxable.text.WrappingFunction;
+
+public class ExtendedTokenizerTest
+{
+    private ExtendedTokenizer tokenizer;
 
     private WrappingFunction wrappingFunction = null;
 
     @Before
     public void beforeEach() {
-        tokenizer = new Tokenizer();
+        tokenizer = new ExtendedTokenizer();
     }
 
     @Test

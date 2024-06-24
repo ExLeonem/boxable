@@ -10,6 +10,11 @@ public class TextLookAhead<T>
 
   public boolean hasCharacterAt(int textCharStartIndex, int offsetOfStartIndex, char expectedCharacter)
   {
+    return hasCharacterAt(text, textCharStartIndex, offsetOfStartIndex, expectedCharacter);
+  }
+
+  public static boolean hasCharacterAt(String text, int textCharStartIndex, int offsetOfStartIndex, char expectedCharacter)
+  {
     if (textCharStartIndex >= text.length() - offsetOfStartIndex)
     {
       return false;
