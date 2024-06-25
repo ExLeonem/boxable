@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Stack;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
 import be.quodlibet.boxable.text.WrappingFunction;
@@ -47,7 +48,7 @@ public class Tokenizer
       return Collections.emptyList();
     }
 
-    text = Jsoup.clean(text, ALLOWED_HTML_ELEMENTS);
+    text = removeUnsupportedTags(text);
     final Stack<Integer> possibleWrapPoints = wrappingFunction == null
         ? findWrapPoints(text)
         : findWrapPointsWithFunction(text, wrappingFunction);
@@ -83,6 +84,14 @@ public class Tokenizer
     tokens.add(POSSIBLE_WRAP_POINT);
 
     return tokens;
+  }
+
+  private static String removeUnsupportedTags(String text)
+  {
+    Document.OutputSettings settings = new Document.OutputSettings();
+    settings.prettyPrint(false);
+    text = Jsoup.clean(text, "", ALLOWED_HTML_ELEMENTS, settings);
+    return text;
   }
 
   private static Stack<Integer> findWrapPoints(String text)
