@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
+
 import be.quodlibet.boxable.text.WrappingFunction;
 
 public class Tokenizer
@@ -28,65 +31,23 @@ public class Tokenizer
   private static final Token WRAP_POINT_LI = new Token(TokenType.WRAP_POINT, "li");
   private static final Token WRAP_POINT_BR = new Token(TokenType.WRAP_POINT, "br");
 
+  private static final Safelist ALLOWED_HTML_ELEMENTS = new Safelist();
+
   public Tokenizer()
   {
     tokens = new ArrayList<>();
     indexOfCurrentCharacterInText = 0;
+    ALLOWED_HTML_ELEMENTS.addTags("i", "p", "b", "ol", "ul", "li", "br");
   }
 
-  private static boolean isWrapPointChar(char ch)
-  {
-    return
-        ch == ' ' ||
-            ch == ',' ||
-            ch == '.' ||
-            ch == '-' ||
-            ch == '@' ||
-            ch == ':' ||
-            ch == ';' ||
-            ch == '\n' ||
-            ch == '\t' ||
-            ch == '\r' ||
-            ch == '\f' ||
-            ch == '\u000B';
-  }
-
-  private static Stack<Integer> findWrapPoints(String text)
-  {
-    Stack<Integer> result = new Stack<>();
-    result.push(text.length());
-    for (int i = text.length() - 2; i >= 0; i--)
-    {
-      if (isWrapPointChar(text.charAt(i)))
-      {
-        result.push(i + 1);
-      }
-    }
-    return result;
-  }
-
-  private static Stack<Integer> findWrapPointsWithFunction(String text, WrappingFunction wrappingFunction)
-  {
-    final String[] split = wrappingFunction.getLines(text);
-    int textIndex = text.length();
-    final Stack<Integer> possibleWrapPoints = new Stack<>();
-    possibleWrapPoints.push(textIndex);
-    for (int i = split.length - 1; i > 0; i--)
-    {
-      final int splitLength = split[i].length();
-      possibleWrapPoints.push(textIndex - splitLength);
-      textIndex -= splitLength;
-    }
-    return possibleWrapPoints;
-  }
-
-  public List<Token> tokenize(final String text, final WrappingFunction wrappingFunction)
+  public List<Token> tokenize(String text, final WrappingFunction wrappingFunction)
   {
     if (text == null)
     {
       return Collections.emptyList();
     }
 
+    text = Jsoup.clean(text, ALLOWED_HTML_ELEMENTS);
     final Stack<Integer> possibleWrapPoints = wrappingFunction == null
         ? findWrapPoints(text)
         : findWrapPointsWithFunction(text, wrappingFunction);
@@ -122,6 +83,52 @@ public class Tokenizer
     tokens.add(POSSIBLE_WRAP_POINT);
 
     return tokens;
+  }
+
+  private static Stack<Integer> findWrapPoints(String text)
+  {
+    Stack<Integer> result = new Stack<>();
+    result.push(text.length());
+    for (int i = text.length() - 2; i >= 0; i--)
+    {
+      if (isWrapPointChar(text.charAt(i)))
+      {
+        result.push(i + 1);
+      }
+    }
+    return result;
+  }
+
+  private static boolean isWrapPointChar(char ch)
+  {
+    return
+        ch == ' ' ||
+            ch == ',' ||
+            ch == '.' ||
+            ch == '-' ||
+            ch == '@' ||
+            ch == ':' ||
+            ch == ';' ||
+            ch == '\n' ||
+            ch == '\t' ||
+            ch == '\r' ||
+            ch == '\f' ||
+            ch == '\u000B';
+  }
+
+  private static Stack<Integer> findWrapPointsWithFunction(String text, WrappingFunction wrappingFunction)
+  {
+    final String[] split = wrappingFunction.getLines(text);
+    int textIndex = text.length();
+    final Stack<Integer> possibleWrapPoints = new Stack<>();
+    possibleWrapPoints.push(textIndex);
+    for (int i = split.length - 1; i > 0; i--)
+    {
+      final int splitLength = split[i].length();
+      possibleWrapPoints.push(textIndex - splitLength);
+      textIndex -= splitLength;
+    }
+    return possibleWrapPoints;
   }
 
   private int processCharacter(String text, StringBuilder sb)
