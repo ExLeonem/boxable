@@ -1,5 +1,7 @@
 package be.quodlibet.boxable.tokenizer;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,6 +9,9 @@ import java.util.Stack;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Entities;
+import org.jsoup.parser.Parser;
+import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Safelist;
 
 import be.quodlibet.boxable.text.WrappingFunction;
@@ -90,7 +95,9 @@ public class Tokenizer
   {
     Document.OutputSettings settings = new Document.OutputSettings();
     settings.prettyPrint(false);
+
     text = Jsoup.clean(text, "", ALLOWED_HTML_ELEMENTS, settings);
+    text = Parser.unescapeEntities(text, false);
     return text;
   }
 

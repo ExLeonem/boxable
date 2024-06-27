@@ -240,6 +240,28 @@ public class TokenizerTest
     assertTextTokensDoNotIncludeIllegalTags(tokens);
   }
 
+  @Test
+  public void test_nbsp_kept() throws Exception
+  {
+    // arrange
+    final String text = "short Text";
+
+    // act
+    final List<Token> tokens = tokenizer.tokenize(text, wrappingFunction);
+
+    // assert
+    for (Token token : tokens)
+    {
+      if (!token.getType().equals(TokenType.TEXT))
+      {
+        continue;
+      }
+
+      String tokenData = token.getData();
+      assertEquals(tokenData, text);
+    }
+  }
+
   private static void assertTextTokensDoNotIncludeIllegalTags(List<Token> tokens)
   {
     for (final Token token : tokens)
