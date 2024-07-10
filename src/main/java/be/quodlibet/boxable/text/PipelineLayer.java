@@ -3,9 +3,11 @@ package be.quodlibet.boxable.text;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.apache.pdfbox.pdmodel.font.PDFont;
+
+import be.quodlibet.boxable.tokenizer.Token;
+import be.quodlibet.boxable.tokenizer.TokenType;
 
 /**
  * 

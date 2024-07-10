@@ -17,9 +17,9 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import be.quodlibet.boxable.text.ParagraphProcessingContext;
-import be.quodlibet.boxable.text.Token;
-import be.quodlibet.boxable.text.TokenType;
-import be.quodlibet.boxable.text.Tokenizer;
+import be.quodlibet.boxable.tokenizer.Token;
+import be.quodlibet.boxable.tokenizer.TokenType;
+import be.quodlibet.boxable.tokenizer.Tokenizer;
 import be.quodlibet.boxable.text.WrappingFunction;
 import be.quodlibet.boxable.utils.FontUtils;
 import be.quodlibet.boxable.utils.PDStreamUtils;
@@ -128,7 +128,8 @@ public class Paragraph
     // text and wrappingFunction are immutable, so we only ever need to compute tokens once
     if (tokens == null)
     {
-      tokens = Tokenizer.tokenize(text, wrappingFunction);
+      Tokenizer tokenizer = new Tokenizer();
+      tokens = tokenizer.tokenize(text, wrappingFunction);
     }
 
     ParagraphProcessingContext processingContext = new ParagraphProcessingContext(font);

@@ -6,7 +6,7 @@ package be.quodlibet.boxable;
 
 import be.quodlibet.boxable.line.LineStyle;
 import be.quodlibet.boxable.page.PageProvider;
-import be.quodlibet.boxable.text.Token;
+import be.quodlibet.boxable.tokenizer.Token;
 import be.quodlibet.boxable.text.WrappingFunction;
 import be.quodlibet.boxable.utils.FontUtils;
 import be.quodlibet.boxable.utils.PDStreamUtils;

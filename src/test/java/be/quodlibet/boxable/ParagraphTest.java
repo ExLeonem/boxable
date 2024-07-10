@@ -68,7 +68,7 @@ public class ParagraphTest
 
   private List<String> splitByTags(String text)
   {
-    String[] tagsToReplace = {"b", "li", "ul", "strong", "i"};
+    String[] tagsToReplace = {"b", "li", "ul", "strong", "i", "br"};
     for (String tagToReplace : tagsToReplace)
     {
       text = text.replaceAll(createOpenTag(tagToReplace), " ");

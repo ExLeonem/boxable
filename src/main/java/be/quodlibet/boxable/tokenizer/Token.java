@@ -1,4 +1,4 @@
-package be.quodlibet.boxable.text;
+package be.quodlibet.boxable.tokenizer;
 
 import java.io.IOException;
 import java.util.Objects;
