@@ -1,9 +1,9 @@
 package be.quodlibet.boxable.text;
 
-import org.apache.pdfbox.pdmodel.font.PDFont;
-
 import java.io.IOException;
 import java.util.Objects;
+
+import org.apache.pdfbox.pdmodel.font.PDFont;
 
 // Token itself is thread safe, so you can reuse shared instances;
 // however, subclasses may have additional methods which are not thread safe.

@@ -1,8 +1,6 @@
 package be.quodlibet.boxable;
 
-import be.quodlibet.boxable.datatable.DataTable;
-import be.quodlibet.boxable.datatable.UpdateCellProperty;
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +19,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import be.quodlibet.boxable.datatable.DataTable;
+import be.quodlibet.boxable.datatable.UpdateCellProperty;
 
 /**
  *

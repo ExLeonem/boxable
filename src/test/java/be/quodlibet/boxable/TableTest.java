@@ -3,14 +3,17 @@
  */
 package be.quodlibet.boxable;
 
-import java.awt.Color;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import be.quodlibet.boxable.utils.PageContentStreamOptimized;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -20,14 +23,12 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.junit.Test;
+
 import be.quodlibet.boxable.datatable.DataTable;
 import be.quodlibet.boxable.utils.FontUtils;
 import be.quodlibet.boxable.utils.ImageUtils;
 import be.quodlibet.boxable.utils.PDStreamUtils;
-import java.nio.file.Files;
-
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import be.quodlibet.boxable.utils.PageContentStreamOptimized;
 
 public class TableTest {
 /**

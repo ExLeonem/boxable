@@ -4,7 +4,7 @@
  */
 package be.quodlibet.boxable;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,20 +12,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import be.quodlibet.boxable.text.ParagraphProcessingContext;
-import be.quodlibet.boxable.utils.PageContentStreamOptimized;
-
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
+import be.quodlibet.boxable.text.ParagraphProcessingContext;
 import be.quodlibet.boxable.text.Token;
 import be.quodlibet.boxable.text.TokenType;
 import be.quodlibet.boxable.text.Tokenizer;
 import be.quodlibet.boxable.text.WrappingFunction;
 import be.quodlibet.boxable.utils.FontUtils;
 import be.quodlibet.boxable.utils.PDStreamUtils;
-
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import be.quodlibet.boxable.utils.PageContentStreamOptimized;
 
 public class Paragraph
 {
