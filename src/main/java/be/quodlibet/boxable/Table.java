@@ -42,7 +42,6 @@ public abstract class Table<T extends PDPage> {
     private List<PDOutlineItem> bookmarks;
     private List<Row<T>> header = new ArrayList<>();
     private List<Row<T>> rows = new ArrayList<>();
-    private PageBreakIdentifier pageBreakIdentifier;
 
     private final float yStartNewPage;
     private float yStart;
@@ -163,7 +162,7 @@ public abstract class Table<T extends PDPage> {
 
         ensureStreamIsOpen();
 
-        if (isEndOfPage(TableElement.TITLE, freeSpaceForPageBreak)) {
+        if (isEndOfPage(freeSpaceForPageBreak)) {
             this.tableContentStream.close();
             pageBreak();
             tableStartedAtNewPage = true;
@@ -230,7 +229,7 @@ public abstract class Table<T extends PDPage> {
             if (header.contains(row)) {
                 // check if header row height and first data row height can fit the page
                 // if not draw them on another page
-                if (isEndOfPage(TableElement.HEADER_ROW, getMinimumHeight())) {
+                if (isEndOfPage(getMinimumHeight())) {
                     pageBreak();
                     tableStartedAtNewPage = true;
                 }
@@ -246,10 +245,13 @@ public abstract class Table<T extends PDPage> {
         // row.getHeight is currently an extremely expensive function so get the value
         // once during drawing and reuse it, since it will not change during drawing
         float rowHeight = row.getHeight();
+        drawRow(row, rowHeight);
+    }
 
+    public void drawRow(Row<T> row, float rowHeight) throws IOException {
         boolean isNotAHeaderRow = !header.contains(row);
         boolean isNotFirstRow = row != rows.get(0);
-        boolean isEndOfPage = isEndOfPage(getRowType(isNotAHeaderRow), rowHeight);
+        boolean isEndOfPage = isEndOfPage(rowHeight);
         if (isNotAHeaderRow && isNotFirstRow && !isEndOfPage) {
             row.removeTopBorders();
         }
@@ -318,11 +320,6 @@ public abstract class Table<T extends PDPage> {
         if (drawContent) {
             drawCellContent(row, rowHeight);
         }
-    }
-
-    private static TableElement getRowType(boolean isNotAHeaderRow)
-    {
-        return isNotAHeaderRow ? TableElement.ROW : TableElement.HEADER_ROW;
     }
 
     /**
@@ -807,13 +804,13 @@ public abstract class Table<T extends PDPage> {
         }
     }
 
-    private void ensureStreamIsOpen() throws IOException {
+    public void ensureStreamIsOpen() throws IOException {
         if (tableContentStream == null) {
             tableContentStream = createPdPageContentStream();
         }
     }
 
-    private void endTable() throws IOException {
+    public void endTable() throws IOException {
         this.tableContentStream.close();
     }
 
@@ -824,20 +821,17 @@ public abstract class Table<T extends PDPage> {
         return this.currentPage;
     }
 
-    private boolean isEndOfPage(TableElement element, float spaceToUse) {
-        if (pageBreakIdentifier != null) {
-            return pageBreakIdentifier.shouldPerformPageBreak(element, yStart, pageBottomMargin, spaceToUse);
-        }
-
+    public boolean isEndOfPage(float spaceToUse) {
         float currentY = yStart - spaceToUse;
         boolean isEndOfPage = currentY <= pageBottomMargin;
+
         if (isEndOfPage) {
             setTableIsBroken(true);
         }
         return isEndOfPage;
     }
 
-    private void pageBreak() throws IOException {
+    public void pageBreak() throws IOException {
         tableContentStream.close();
         this.yStart = yStartNewPage - pageTopMargin;
         this.currentPage = createNewPage();
@@ -985,8 +979,8 @@ public abstract class Table<T extends PDPage> {
         this.removeAllBorders = removeAllBorders;
     }
 
-    public void setPageBreakIdentifier(PageBreakIdentifier pageBreakIdentifier)
+    public float getYStart()
     {
-        this.pageBreakIdentifier = pageBreakIdentifier;
+        return this.yStart;
     }
 }

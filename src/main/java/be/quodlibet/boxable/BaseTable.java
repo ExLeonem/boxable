@@ -67,9 +67,4 @@ public class BaseTable extends Table<PDPage>
   {
     // Do nothing as we don't have any fonts to load
   }
-
-  public void setPageBreakIdentifier(PageBreakIdentifier pageBreakIdentifier)
-  {
-    super.setPageBreakIdentifier(pageBreakIdentifier);
-  }
 }
