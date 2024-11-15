@@ -4,19 +4,13 @@
  */
 package be.quodlibet.boxable;
 
-import be.quodlibet.boxable.line.LineStyle;
-import be.quodlibet.boxable.page.PageProvider;
-import be.quodlibet.boxable.tokenizer.Token;
-import be.quodlibet.boxable.text.WrappingFunction;
-import be.quodlibet.boxable.utils.FontUtils;
-import be.quodlibet.boxable.utils.PDStreamUtils;
-import be.quodlibet.boxable.utils.PageContentStreamOptimized;
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -30,6 +24,14 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageXYZDestination;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 
+import be.quodlibet.boxable.line.LineStyle;
+import be.quodlibet.boxable.page.PageProvider;
+import be.quodlibet.boxable.text.WrappingFunction;
+import be.quodlibet.boxable.tokenizer.Token;
+import be.quodlibet.boxable.utils.FontUtils;
+import be.quodlibet.boxable.utils.PDStreamUtils;
+import be.quodlibet.boxable.utils.PageContentStreamOptimized;
+
 public abstract class Table<T extends PDPage> {
 
     public final PDDocument document;
@@ -40,6 +42,7 @@ public abstract class Table<T extends PDPage> {
     private List<PDOutlineItem> bookmarks;
     private List<Row<T>> header = new ArrayList<>();
     private List<Row<T>> rows = new ArrayList<>();
+    private PageBreakIdentifier pageBreakIdentifier;
 
     private final float yStartNewPage;
     private float yStart;
@@ -83,7 +86,7 @@ public abstract class Table<T extends PDPage> {
         this(yStart, yStartNewPage, 0, pageBottomMargin, width, margin, document, currentPage, drawLines, drawContent,
                 null);
     }
-  
+
     /**
      * @deprecated Use one of the constructors that pass a {@link PageProvider}
      * @param yStartNewPage Y position where possible new page of {@link Table}
@@ -119,7 +122,7 @@ public abstract class Table<T extends PDPage> {
         this.pageProvider = pageProvider;
         loadFonts();
     }
-  
+
     public Table(float yStartNewPage, float pageTopMargin, float pageBottomMargin, float width, float margin,
             PDDocument document, boolean drawLines, boolean drawContent, PageProvider<T> pageProvider)
             throws IOException {
@@ -160,7 +163,7 @@ public abstract class Table<T extends PDPage> {
 
         ensureStreamIsOpen();
 
-        if (isEndOfPage(freeSpaceForPageBreak)) {
+        if (isEndOfPage(TableElement.TITLE, freeSpaceForPageBreak)) {
             this.tableContentStream.close();
             pageBreak();
             tableStartedAtNewPage = true;
@@ -225,10 +228,9 @@ public abstract class Table<T extends PDPage> {
 
         for (Row<T> row : rows) {
             if (header.contains(row)) {
-                // check if header row height and first data row height can fit
-                // the page
-                // if not draw them on another side
-                if (isEndOfPage(getMinimumHeight())) {
+                // check if header row height and first data row height can fit the page
+                // if not draw them on another page
+                if (isEndOfPage(TableElement.HEADER_ROW, getMinimumHeight())) {
                     pageBreak();
                     tableStartedAtNewPage = true;
                 }
@@ -240,17 +242,16 @@ public abstract class Table<T extends PDPage> {
         return yStart;
     }
 
-    private void drawRow(Row<T> row) throws IOException {
+    public void drawRow(Row<T> row) throws IOException {
         // row.getHeight is currently an extremely expensive function so get the value
         // once during drawing and reuse it, since it will not change during drawing
         float rowHeight = row.getHeight();
 
-        // if it is not header row or first row in the table then remove row's
-        // top border
-        if (row != header && row != rows.get(0)) {
-            if (!isEndOfPage(rowHeight)) {
-                row.removeTopBorders();
-            }
+        boolean isNotAHeaderRow = !header.contains(row);
+        boolean isNotFirstRow = row != rows.get(0);
+        boolean isEndOfPage = isEndOfPage(getRowType(isNotAHeaderRow), rowHeight);
+        if (isNotAHeaderRow && isNotFirstRow && !isEndOfPage) {
+            row.removeTopBorders();
         }
 
         // draw the bookmark
@@ -270,7 +271,7 @@ public abstract class Table<T extends PDPage> {
             row.removeAllBorders();
         }
 
-        if (isEndOfPage(rowHeight) && !header.contains(row)) {
+        if (isEndOfPage && isNotAHeaderRow) {
 
             // Draw line at bottom of table
             endTable();
@@ -287,8 +288,7 @@ public abstract class Table<T extends PDPage> {
                 // removing top borders to avoid double border drawing
                 removeTopBorders = true;
             } else {
-                // after a page break, we have to ensure that top borders get
-                // drawn
+                // after a page break, we have to ensure that top borders get drawn
                 removeTopBorders = false;
             }
         }
@@ -318,6 +318,11 @@ public abstract class Table<T extends PDPage> {
         if (drawContent) {
             drawCellContent(row, rowHeight);
         }
+    }
+
+    private static TableElement getRowType(boolean isNotAHeaderRow)
+    {
+        return isNotAHeaderRow ? TableElement.ROW : TableElement.HEADER_ROW;
     }
 
     /**
@@ -398,7 +403,7 @@ public abstract class Table<T extends PDPage> {
                         break;
                 }
                 imageCell.getImage().draw(document, tableContentStream, cursorX, cursorY);
-              
+
                 if (imageCell.getUrl() != null) {
                     List<PDAnnotation> annotations = ((PDPage)currentPage).getAnnotations();
 
@@ -564,7 +569,7 @@ public abstract class Table<T extends PDPage> {
                             cursorY -= cell.getVerticalFreeSpace();
                             break;
                     }
-                  
+
                     if (cell.getUrl() != null) {
                         List<PDAnnotation> annotations = ((PDPage)currentPage).getAnnotations();
                         PDAnnotationLink txtLink = new PDAnnotationLink();
@@ -819,8 +824,12 @@ public abstract class Table<T extends PDPage> {
         return this.currentPage;
     }
 
-    private boolean isEndOfPage(float freeSpaceForPageBreak) {
-        float currentY = yStart - freeSpaceForPageBreak;
+    private boolean isEndOfPage(TableElement element, float spaceToUse) {
+        if (pageBreakIdentifier != null) {
+            return pageBreakIdentifier.shouldPerformPageBreak(element, yStart, pageBottomMargin, spaceToUse);
+        }
+
+        float currentY = yStart - spaceToUse;
         boolean isEndOfPage = currentY <= pageBottomMargin;
         if (isEndOfPage) {
             setTableIsBroken(true);
@@ -847,8 +856,6 @@ public abstract class Table<T extends PDPage> {
     }
 
     /**
-     * /**
-     *
      * @deprecated Use {@link #addHeaderRow(Row)} instead, as it supports
      * multiple header rows
      * @param header row that will be set as table's header row
@@ -978,4 +985,8 @@ public abstract class Table<T extends PDPage> {
         this.removeAllBorders = removeAllBorders;
     }
 
+    public void setPageBreakIdentifier(PageBreakIdentifier pageBreakIdentifier)
+    {
+        this.pageBreakIdentifier = pageBreakIdentifier;
+    }
 }
