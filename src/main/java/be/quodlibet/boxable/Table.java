@@ -831,6 +831,12 @@ public abstract class Table<T extends PDPage> {
         return isEndOfPage;
     }
 
+    public float getFreeSpaceY()
+    {
+        float freeSpaceY = yStart - pageBottomMargin;
+        return freeSpaceY >= 0 ? freeSpaceY : 0;
+    }
+
     public void pageBreak() throws IOException {
         tableContentStream.close();
         this.yStart = yStartNewPage - pageTopMargin;
